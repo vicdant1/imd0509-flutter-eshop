@@ -1,24 +1,28 @@
-import 'package:flutter/cupertino.dart';
+import 'package:json_annotation/json_annotation.dart';
 
-class Product with ChangeNotifier {
-  final String id;
+part 'product.g.dart';
+
+@JsonSerializable()
+class Product {
+  final int id;
+  String? key;
   final String title;
   final String description;
   final double price;
   final String imageUrl;
-  bool isFavorite;
+  int quantidade;
 
-  Product({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.price,
-    required this.imageUrl,
-    this.isFavorite = false,
-  });
+  Product(
+      {required this.id,
+      required this.title,
+      required this.description,
+      required this.price,
+      required this.imageUrl,
+      this.key,
+      required this.quantidade});
 
-  void toggleFavorite() {
-    isFavorite = !isFavorite;
-    notifyListeners();
-  }
+  factory Product.fromJson(Map<String, dynamic> json) =>
+      _$ProductFromJson(json);
+
+  Map<String, dynamic> toJson() => _$ProductToJson(this);
 }
