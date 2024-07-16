@@ -1,65 +1,71 @@
+import 'package:f05_eshop/controllers/products_controller.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:get_it/get_it.dart';
 
 import '../components/product_grid.dart';
 import '../utils/app_routes.dart';
 
-enum FilterOptions {
-  Favorite,
-  All,
-}
-
 class ProductsOverviewPage extends StatefulWidget {
-  ProductsOverviewPage({Key? key}) : super(key: key);
+  const ProductsOverviewPage({Key? key}) : super(key: key);
 
   @override
   State<ProductsOverviewPage> createState() => _ProductsOverviewPageState();
 }
 
 class _ProductsOverviewPageState extends State<ProductsOverviewPage> {
-  bool _showOnlyFavorites = false;
+  final ProductsController controller =
+      GetIt.instance.get<ProductsController>();
+
+  @override
+  void initState() {
+    controller.getAll();
+    controller.getFavoritesItens();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    //final provider = Provider.of<ProductList>(context);
-
     return Scaffold(
       appBar: AppBar(
-        title: Text('Minha Loja'),
+        title: const Text('Minha Loja'),
+        leading: GestureDetector(
+            onTap: () {
+              Navigator.of(context).pushNamed(
+                AppRoutes.ORDER_PAGES,
+              );
+            },
+            child: const Icon(Icons.person)),
         actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.of(context).pushNamed(
+                  AppRoutes.SHOPPING_CART,
+                );
+              },
+              icon: const Icon(Icons.shopping_cart)),
           IconButton(
               onPressed: () {
                 Navigator.of(context).pushNamed(
                   AppRoutes.PRODUCT_FORM,
                 );
               },
-              icon: Icon(Icons.add)),
-          PopupMenuButton(
-            icon: Icon(Icons.more_vert),
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                child: Text('Somente Favoritos'),
-                value: FilterOptions.Favorite,
-              ),
-              PopupMenuItem(
-                child: Text('Todos'),
-                value: FilterOptions.All,
-              ),
-            ],
-            onSelected: (FilterOptions selectedValue) {
-              setState(() {
-                if (selectedValue == FilterOptions.Favorite) {
-                  //provider.showFavoriteOnly();
-                  _showOnlyFavorites = true;
-                } else {
-                  //provider.showAll();
-                  _showOnlyFavorites = false;
-                }
-              });
-            },
-          ),
+              icon: const Icon(Icons.add)),
         ],
       ),
-      body: ProductGrid(_showOnlyFavorites),
+      body: Observer(builder: (_) {
+        return ProductGrid(
+          products: controller.produtos,
+          favorites: controller.favorites,
+          onFavorite: (index) async {
+            controller.favorites.contains(controller.produtos[index].id)
+                ? await controller
+                    .removeFavoriteItem(controller.favorites.indexOf(index))
+                : await controller
+                    .addProductFavorite(controller.produtos[index].id);
+          },
+        );
+      }),
     );
   }
 }
